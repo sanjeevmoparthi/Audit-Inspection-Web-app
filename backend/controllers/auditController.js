@@ -111,19 +111,12 @@ exports.downloadRegionReport = async (req, res) => {
       .populate("regionId", "name");
 
     if (!audit) {
-      return res.status(404).json({
-        message: "No audit found for this region",
-      });
+      return res.status(404).json({ message: "No audit found for this region" });
     }
 
-    const doc = new PDFDocument({
-      margin: 40,
-      size: "A4",
-      bufferPages: true,
-    });
+    const doc = new PDFDocument({ margin: 40, size: "A4", bufferPages: true });
 
-    const safeRegionName =
-      audit.regionId?.name?.replace(/\s+/g, "_") || "region";
+    const safeRegionName = audit.regionId?.name?.replace(/\s+/g, "_") || "region";
 
     res.setHeader(
       "Content-Disposition",
@@ -134,124 +127,85 @@ exports.downloadRegionReport = async (req, res) => {
     doc.pipe(res);
 
     // =========================
-    // HEADER SECTION
+    // HEADER
     // =========================
-    doc
-      .fontSize(22)
-      .fillColor("#0A3D62")
-      .text("REGION AUDIT REPORT", { align: "center" });
-
-    doc.moveDown();
-
-    doc
-      .fontSize(12)
-      .fillColor("black")
-      .text(`Company: ${audit.companyId?.name || "N/A"}`)
-      .text(`Branch: ${audit.branchId?.name || "N/A"}`)
-      .text(`Region: ${audit.regionId?.name || "N/A"}`)
-      .text(`Generated On: ${new Date().toLocaleDateString()}`);
-
+    doc.rect(0, 0, doc.page.width, 80).fill("#0A3D62");
+    doc.fillColor("white").fontSize(22).text("REGION AUDIT REPORT", 0, 30, { align: "center" });
     doc.moveDown(2);
 
+    doc.fillColor("black").fontSize(12)
+      .text(`Company: ${audit.companyId?.name || "N/A"}`)
+      .moveDown(1)
+      .text(`Branch: ${audit.branchId?.name || "N/A"}`)
+      .moveDown(1)
+      .text(`Region: ${audit.regionId?.name || "N/A"}`)
+      .moveDown(1)
+      .text(`Generated On: ${new Date().toLocaleDateString()}`)
+      .moveDown(2);
+
     // =========================
-    // OPTIONS SECTION
+    // AUDIT OPTIONS LOOP
     // =========================
     if (audit.options && audit.options.length > 0) {
       audit.options.forEach((opt, idx) => {
-        // Light background box
-        doc
-          .rect(doc.x, doc.y, 520, 25)
-          .fill("#EAF2F8")
-          .stroke();
+        const startX = doc.x;
+        const startY = doc.y;
+        const contentGap = 5; // gap inside the box
+        const fieldGap = 4; // space between lines
+        let currentY = startY + contentGap;
 
-        doc
-          .fillColor("black")
-          .fontSize(13)
-          .text(`Audit Point ${idx + 1}`, doc.x + 10, doc.y - 18);
+        // Draw each field dynamically
+        const drawField = (label, value) => {
+          const maxWidth = 520 - 2 * contentGap;
+          const textHeight = doc.heightOfString(`${label}: ${value || "N/A"}`, { width: maxWidth });
 
-        doc.moveDown(2);
+          doc.font("Helvetica-Bold").fillColor("black").text(`${label}: `, startX + contentGap, currentY, { continued: true });
+          doc.font("Helvetica").fillColor("black").text(value || "N/A");
+          currentY += textHeight + fieldGap;
+        };
 
-        doc
-          .fontSize(11)
-          .fillColor("#1B4F72")
-          .text(`Option Name: ${opt.optionName || "N/A"}`);
+        drawField("Option Name", opt.optionName);
+        drawField("Amount", opt.amount);
+        drawField("Total Amount", opt.totalAmount);
+        drawField("Initial Data Requirement", opt.initialDataRequirement);
+        drawField("Person Responsible", opt.personResponsible);
+        drawField("Data Received Status", opt.dataReceivedStatus);
+        drawField("Additional Details Required", opt.additionalDetailsRequired);
+        drawField("Work Status", opt.workStatus);
+        drawField("Queries / Observation", opt.queriesObservation);
 
-        doc
-          .fillColor("black")
-          .text(`Amount: ${opt.amount || 0}`)
-          .text(`Total Amount: ${opt.totalAmount || 0}`)
-          .text(
-            `Initial Data Requirement: ${
-              opt.initialDataRequirement || "N/A"
-            }`
-          )
-          .text(
-            `Person Responsible: ${opt.personResponsible || "N/A"}`
-          )
-          .text(
-            `Data Received Status: ${opt.dataReceivedStatus || "N/A"}`
-          )
-          .text(
-            `Additional Details Required: ${
-              opt.additionalDetailsRequired || "N/A"
-            }`
-          )
-          .text(`Work Status: ${opt.workStatus || "N/A"}`)
-          .text(
-            `Queries / Observation: ${
-              opt.queriesObservation || "N/A"
-            }`
-          );
+        // Draw box around the audit point
+        const boxHeight = currentY - startY + contentGap;
+        doc.roundedRect(startX, startY, 550, boxHeight, 6).stroke("#AAB7B8");
 
-        doc.moveDown();
-
-        // Divider line
-        doc
-          .moveTo(doc.x, doc.y)
-          .lineTo(550, doc.y)
-          .strokeColor("#D5D8DC")
-          .stroke();
-
-        doc.moveDown(2);
+        // Move below the box for next audit point
+        doc.y = startY + boxHeight + 10;
       });
     } else {
       doc.text("No audit points available.");
     }
 
     // =========================
-    // FOOTER PAGE NUMBERS
+    // FOOTER
     // =========================
     const range = doc.bufferedPageRange();
-
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(i);
-      doc
-        .fontSize(9)
-        .fillColor("gray")
-        .text(
-          `Page ${i + 1} of ${range.count}`,
-          0,
-          doc.page.height - 40,
-          { align: "center" }
-        );
+      doc.fontSize(9).fillColor("gray")
+        .text(`Page ${i + 1} of ${range.count}`, 0, doc.page.height - 40, { align: "center" });
     }
 
     doc.end();
+
   } catch (err) {
     console.error("Region PDF Error:", err);
-
-    if (!res.headersSent) {
-      res.status(500).json({
-        message: "Error generating region PDF",
-      });
-    }
+    if (!res.headersSent) res.status(500).json({ message: "Error generating region PDF" });
   }
 };
 
 /* ================================
    DOWNLOAD COMPANY REPORT
 ================================ */
-
 
 exports.downloadCompanyReport = async (req, res) => {
   try {
@@ -263,151 +217,101 @@ exports.downloadCompanyReport = async (req, res) => {
       .populate("regionId", "name");
 
     if (!audits.length) {
-      return res.status(404).json({
-        message: "No audits found for this company",
-      });
+      return res.status(404).json({ message: "No audits found for this company" });
     }
 
-    const doc = new PDFDocument({
-      margin: 40,
-      size: "A4",
-      bufferPages: true,
-    });
-
+    const doc = new PDFDocument({ margin: 40, size: "A4", bufferPages: true });
     res.setHeader(
       "Content-Disposition",
       `attachment; filename=company_${companyId}_report.pdf`
     );
     res.setHeader("Content-Type", "application/pdf");
-
     doc.pipe(res);
 
     // =========================
-    // HEADER SECTION
+    // HEADER
     // =========================
-    doc
-      .fontSize(22)
-      .fillColor("#0A3D62")
-      .text("COMPANY AUDIT REPORT", { align: "center" });
-
-    doc.moveDown();
-
-    doc
-      .fontSize(12)
-      .fillColor("black")
-      .text(`Company: ${audits[0].companyId?.name || "N/A"}`, {
-        align: "left",
-      });
-
-    doc.text(`Generated On: ${new Date().toLocaleDateString()}`);
+    doc.rect(0, 0, doc.page.width, 80).fill("#0A3D62");
+    doc.fillColor("white").fontSize(22).text("COMPANY AUDIT REPORT", 0, 30, { align: "center" });
     doc.moveDown(2);
+
+    doc.fillColor("black").fontSize(12)
+      .text(`Company: ${audits[0].companyId?.name || "N/A"}`)
+      .moveDown(1)
+      .text(`Generated On: ${new Date().toLocaleDateString()}`)
+      .moveDown(2);
 
     // =========================
     // AUDIT LOOP
     // =========================
     audits.forEach((audit, idx) => {
       // Branch + Region Header Box
-      doc
-        .rect(doc.x, doc.y, 520, 25)
-        .fill("#EAF2F8")
-        .stroke();
-
-      doc
-        .fillColor("black")
-        .fontSize(13)
-        .text(
-          `Branch: ${audit.branchId?.name || "N/A"}   |   Region: ${
-            audit.regionId?.name || "N/A"
-          }`,
-          doc.x + 10,
-          doc.y - 18
-        );
-
+      const headerHeight = 30;
+      doc.rect(doc.x, doc.y, 520, headerHeight).fill("#D6EAF8").stroke();
+      doc.fillColor("#3c129e").fontSize(13).text(
+        `Branch: ${audit.branchId?.name || "N/A"} | Region: ${audit.regionId?.name || "N/A"}`,
+        doc.x + 10,
+        doc.y + 7
+      );
       doc.moveDown(2);
 
       if (audit.options && audit.options.length > 0) {
         audit.options.forEach((opt, i) => {
-          doc
-            .fontSize(12)
-            .fillColor("#1B4F72")
-            .text(`Audit Point ${i + 1}`, { underline: true });
+          const startX = doc.x;
+          const startY = doc.y;
+          const contentGap = 5; // Gap inside box
+          const fieldGap = 4; // Gap between lines
+          let currentY = startY + contentGap;
 
-          doc.moveDown(0.5);
+          // Measure content height dynamically
+          const drawField = (label, value) => {
+            const fieldText = `${label}: ${value || "N/A"}`;
+            const maxWidth = 520 - 2 * contentGap;
+            const fieldHeight = doc.heightOfString(fieldText, { width: maxWidth });
+            doc.font("Helvetica-Bold").fillColor("black").text(`${label}: `, startX + contentGap, currentY, { continued: true });
+            doc.font("Helvetica").fillColor("black").text(value || "N/A");
+            currentY += fieldHeight + fieldGap;
+          };
 
-          doc
-            .fillColor("black")
-            .fontSize(11)
-            .text(`Option Name: ${opt.optionName || "N/A"}`)
-            .text(`Amount: ${opt.amount || 0}`)
-            .text(`Total Amount: ${opt.totalAmount || 0}`)
-            .text(
-              `Initial Data Requirement: ${
-                opt.initialDataRequirement || "N/A"
-              }`
-            )
-            .text(
-              `Person Responsible: ${opt.personResponsible || "N/A"}`
-            )
-            .text(
-              `Data Received Status: ${opt.dataReceivedStatus || "N/A"}`
-            )
-            .text(
-              `Additional Details Required: ${
-                opt.additionalDetailsRequired || "N/A"
-              }`
-            )
-            .text(`Work Status: ${opt.workStatus || "N/A"}`)
-            .text(
-              `Queries / Observation: ${
-                opt.queriesObservation || "N/A"
-              }`
-            );
+          // Draw fields to calculate total height
+          drawField("Option Name", opt.optionName);
+          drawField("Amount", opt.amount);
+          drawField("Total Amount", opt.totalAmount);
+          drawField("Initial Data Requirement", opt.initialDataRequirement);
+          drawField("Person Responsible", opt.personResponsible);
+          drawField("Data Received Status", opt.dataReceivedStatus);
+          drawField("Additional Details Required", opt.additionalDetailsRequired);
+          drawField("Work Status", opt.workStatus);
+          drawField("Queries / Observation", opt.queriesObservation);
 
-          doc.moveDown();
-          doc
-            .moveTo(doc.x, doc.y)
-            .lineTo(550, doc.y)
-            .strokeColor("#D5D8DC")
-            .stroke();
+          // Draw box around content dynamically
+          const boxHeight = currentY - startY + contentGap;
+          doc.roundedRect(startX, startY, 550, boxHeight, 6).stroke("#AAB7B8");
 
-          doc.moveDown();
+          doc.y = startY + boxHeight + 10; // move below the box
         });
       } else {
         doc.text("No audit points available.");
+        doc.moveDown(1);
       }
 
-      // Avoid extra page at end
-      if (idx !== audits.length - 1) {
-        doc.addPage();
-      }
+      // Add page break only if needed
+      if (idx !== audits.length - 1) doc.addPage();
     });
 
     // =========================
-    // FOOTER (Page Numbers)
+    // FOOTER
     // =========================
     const range = doc.bufferedPageRange();
-
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(i);
-      doc
-        .fontSize(9)
-        .fillColor("gray")
-        .text(
-          `Page ${i + 1} of ${range.count}`,
-          0,
-          doc.page.height - 40,
-          { align: "center" }
-        );
+      doc.fontSize(9).fillColor("gray")
+        .text(`Page ${i + 1} of ${range.count}`, 0, doc.page.height - 40, { align: "center" });
     }
 
     doc.end();
   } catch (err) {
     console.error("PDF Error:", err);
-
-    if (!res.headersSent) {
-      res.status(500).json({
-        message: "Error generating company PDF",
-      });
-    }
+    if (!res.headersSent) res.status(500).json({ message: "Error generating company PDF" });
   }
 };
