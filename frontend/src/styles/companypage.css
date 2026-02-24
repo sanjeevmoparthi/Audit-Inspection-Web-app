@@ -1,0 +1,72 @@
+.homeTable{
+    width: 50%;
+    margin : 60px auto ;
+    background-color: white;
+    padding: 50px;
+    border-radius: 20px ;
+    box-shadow: 20px 20px 30px  ;
+}
+
+.homeTable .maintable {
+    width: 100%;
+    margin-top: 5px;
+    /* border-collapse: collapse; */
+    table-layout: fixed;
+    padding: 10px;
+    text-align: center;
+    vertical-align: middle;
+
+}
+
+.maintable thead{
+    background-color: darkcyan;
+    color:white ;
+}
+
+.maintable td {
+    /* white-space: nowrap; */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.actionButtons button{
+    margin:0 10px ;
+
+}
+
+.companyButtons {
+  width: 100%;
+  height: 100%;
+  display:block;
+  padding: 15px;
+  background-color: white;
+  transition: background-color 0.2s ease;
+}
+
+.companyButtons:hover {
+  background-color:cyan;
+}
+
+.formWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 5px ;
+  margin-bottom: 20px;
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+}
+
+.companyFormCard {
+  width: 400px;
+  box-shadow: 1px 4px 20px rgba(0,0,0,0.1);
+  border-radius: 15px;
+}
+
+.companyFormCard h4 {
+  font-weight: 600;
+}
+
+
+
+
+

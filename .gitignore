@@ -1,0 +1,22 @@
+# Node modules (ignore everywhere)
+node_modules/
+
+# Environment files
+.env
+backend/.env
+frontend/.env
+
+# Production builds
+dist/
+build/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Vite
+frontend/dist/
