@@ -49,7 +49,13 @@ export default function CompanyPage() {
       >
         Add Branch <i class="fa-solid fa-user-plus"></i>
       </button>
-
+        {/* RIGHT - Back Button */}
+      <button
+        className="backBtn"
+        onClick={() => navigate(-1)}
+      >
+        <i class="fa-solid fa-backward"></i> Back
+      </button>
       {/* BRANCH FORM */}
       {showForm && (
         <BranchForm

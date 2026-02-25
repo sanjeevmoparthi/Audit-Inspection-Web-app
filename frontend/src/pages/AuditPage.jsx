@@ -5,9 +5,11 @@ import AuditForm from "../components/AuditForm";
 import api from "../api";
 import "../styles/auditpage.css"; 
 
+
 export default function AuditPage() {
   const { companyId, branchId, regionId } = useParams();
   const [audits, setAudits] = useState([]);
+  
 
   const fetchAudits = async () => {
     try {

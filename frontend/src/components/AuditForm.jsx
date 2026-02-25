@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
 import "../styles/auditform.css";
+import { useNavigate } from "react-router-dom";
 
 const emptyOption = {
   optionName: "",
@@ -18,6 +19,8 @@ const emptyOption = {
 const AuditForm = ({ regionId, branchId: initialBranchId, companyId: initialCompanyId, refreshAudits }) => {
   const [options, setOptions] = useState([{ ...emptyOption }]);
   const [auditId, setAuditId] = useState(null);
+  const navigate = useNavigate();
+
 
   // ✅ Store branchId and companyId in state so they can be used in handleSubmit
   const [branchId, setBranchId] = useState(initialBranchId || "");
@@ -82,7 +85,12 @@ const handleSubmit = async (e) => {
       <button type="button" onClick={addOption} className="btn btn-primary mb-3">
         ➕ Add Audit 
       </button>
-
+      <button
+        className="backBtn"
+        onClick={() => navigate(-1)}
+      >
+        <i className="fa-solid fa-backward"></i>  Back
+      </button>
       <form onSubmit={handleSubmit}>
         {options.map((opt, idx) => (
           <div key={idx} className="audit-section mb-3 p-2 border">

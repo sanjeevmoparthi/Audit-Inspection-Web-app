@@ -48,6 +48,12 @@ export default function RegionPage() {
       >
         Add Region <i className="fa-solid fa-user-plus"></i>
       </button>
+      <button
+        className="backBtn"
+        onClick={() => navigate(-1)}
+      >
+        <i class="fa-solid fa-backward"></i> Back
+      </button>
 
       {showForm && (
         <RegionForm
