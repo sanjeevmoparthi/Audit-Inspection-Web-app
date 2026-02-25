@@ -133,35 +133,42 @@ exports.downloadRegionReport = async (req, res) => {
     doc.fillColor("white").fontSize(22).text("REGION AUDIT REPORT", 0, 30, { align: "center" });
     doc.moveDown(2);
 
+    const leftMargin = 50;
     doc.fillColor("black").fontSize(12)
-      .text(`Company: ${audit.companyId?.name || "N/A"}`)
+      .text(`Company: ${audit.companyId?.name || "N/A"}`,leftMargin)
       .moveDown(1)
-      .text(`Branch: ${audit.branchId?.name || "N/A"}`)
+      .text(`Branch: ${audit.branchId?.name || "N/A"}`,leftMargin)
       .moveDown(1)
-      .text(`Region: ${audit.regionId?.name || "N/A"}`)
+      .text(`Region: ${audit.regionId?.name || "N/A"}`,leftMargin)
       .moveDown(1)
-      .text(`Generated On: ${new Date().toLocaleDateString()}`)
+      .text(`Generated On: ${new Date().toLocaleDateString()}`,leftMargin)
       .moveDown(2);
 
     // =========================
     // AUDIT OPTIONS LOOP
     // =========================
+    // =========================
+    // AUDIT OPTIONS LOOP
+    // =========================
     if (audit.options && audit.options.length > 0) {
+
       audit.options.forEach((opt, idx) => {
-        const startX = doc.x;
-        const startY = doc.y;
-        const contentGap = 5; // gap inside the box
-        const fieldGap = 4; // space between lines
-        let currentY = startY + contentGap;
 
-        // Draw each field dynamically
+        const boxStartY = doc.y;
+        const leftMargin = 50;
+        const boxWidth = 500;
+        const fieldSpacing = 6;
+
         const drawField = (label, value) => {
-          const maxWidth = 520 - 2 * contentGap;
-          const textHeight = doc.heightOfString(`${label}: ${value || "N/A"}`, { width: maxWidth });
+          doc
+            .font("Helvetica-Bold")
+            .text(`${label}: `, leftMargin, doc.y, { continued: true, width: boxWidth });
 
-          doc.font("Helvetica-Bold").fillColor("black").text(`${label}: `, startX + contentGap, currentY, { continued: true });
-          doc.font("Helvetica").fillColor("black").text(value || "N/A");
-          currentY += textHeight + fieldGap;
+          doc
+            .font("Helvetica")
+            .text(value || "N/A", { width: boxWidth });
+
+          doc.moveDown(0.5);
         };
 
         drawField("Audit Check Points", opt.AuditCheckPoints);
@@ -174,13 +181,16 @@ exports.downloadRegionReport = async (req, res) => {
         drawField("Work Status", opt.workStatus);
         drawField("Queries / Observation", opt.queriesObservation);
 
-        // Draw box around the audit point
-        const boxHeight = currentY - startY + contentGap;
-        doc.roundedRect(startX, startY, 550, boxHeight, 6).stroke("#AAB7B8");
+        const boxEndY = doc.y;
 
-        // Move below the box for next audit point
-        doc.y = startY + boxHeight + 10;
+        // Draw box AFTER writing content
+        doc
+          .roundedRect(leftMargin - 10, boxStartY - 5, boxWidth + 20, boxEndY - boxStartY + 10, 6)
+          .stroke("#AAB7B8");
+
+        doc.moveDown(1);
       });
+
     } else {
       doc.text("No audit points available.");
     }
@@ -235,10 +245,12 @@ exports.downloadCompanyReport = async (req, res) => {
     doc.fillColor("white").fontSize(22).text("COMPANY AUDIT REPORT", 0, 30, { align: "center" });
     doc.moveDown(2);
 
+    const leftMargin = 50;
+
     doc.fillColor("black").fontSize(12)
-      .text(`Company: ${audits[0].companyId?.name || "N/A"}`)
+      .text(`Company: ${audits[0].companyId?.name || "N/A"}`,leftMargin)
       .moveDown(1)
-      .text(`Generated On: ${new Date().toLocaleDateString()}`)
+      .text(`Generated On: ${new Date().toLocaleDateString()}`,leftMargin)
       .moveDown(2);
 
     // =========================
@@ -246,35 +258,54 @@ exports.downloadCompanyReport = async (req, res) => {
     // =========================
     audits.forEach((audit, idx) => {
       // Branch + Region Header Box
-      const headerHeight = 30;
-      doc.rect(doc.x, doc.y, 520, headerHeight).fill("#D6EAF8").stroke();
-      doc.fillColor("#3c129e").fontSize(13).text(
-        `Branch: ${audit.branchId?.name || "N/A"} | Region: ${audit.regionId?.name || "N/A"}`,
-        doc.x + 10,
-        doc.y + 7
-      );
-      doc.moveDown(2);
+  const headerHeight = 30;
+  const headerWidth = 500; // adjust if needed
+
+  const startY = doc.y;
+
+  doc
+    .rect(leftMargin, startY, headerWidth, headerHeight)
+    .fill("#D6EAF8");
+
+  doc
+    .fillColor("#3c129e")
+    .fontSize(13)
+    .text(
+      `Branch: ${audit.branchId?.name || "N/A"} | Region: ${audit.regionId?.name || "N/A"}`,
+      leftMargin + 10,
+      startY + 8
+    );
+
+  doc.moveDown(2);
 
       if (audit.options && audit.options.length > 0) {
-        audit.options.forEach((opt, i) => {
-          const startX = doc.x;
-          const startY = doc.y;
-          const contentGap = 5; // Gap inside box
-          const fieldGap = 4; // Gap between lines
-          let currentY = startY + contentGap;
 
-          // Measure content height dynamically
+        audit.options.forEach((opt, i) => {
+
+          const leftMargin = 60;
+          const boxWidth = 480;
+
+          const boxStartY = doc.y;
+
           const drawField = (label, value) => {
-            const fieldText = `${label}: ${value || "N/A"}`;
-            const maxWidth = 520 - 2 * contentGap;
-            const fieldHeight = doc.heightOfString(fieldText, { width: maxWidth });
-            doc.font("Helvetica-Bold").fillColor("black").text(`${label}: `, startX + contentGap, currentY, { continued: true });
-            doc.font("Helvetica").fillColor("black").text(value || "N/A");
-            currentY += fieldHeight + fieldGap;
+            doc
+              .font("Helvetica-Bold")
+              .fillColor("black")
+              .text(`${label}: `, leftMargin, doc.y, {
+                continued: true,
+                width: boxWidth
+              });
+
+            doc
+              .font("Helvetica")
+              .text(value || "N/A", {
+                width: boxWidth
+              });
+
+            doc.moveDown(0.5);
           };
 
-          // Draw fields to calculate total height
-          drawField("Audit Check Ponits", opt.AuditCheckPoints);
+          drawField("Audit Check Points", opt.AuditCheckPoints);
           drawField("Amount", opt.amount);
           drawField("Total Amount", opt.totalAmount);
           drawField("Initial Data Requirement", opt.initialDataRequirement);
@@ -284,12 +315,21 @@ exports.downloadCompanyReport = async (req, res) => {
           drawField("Work Status", opt.workStatus);
           drawField("Queries / Observation", opt.queriesObservation);
 
-          // Draw box around content dynamically
-          const boxHeight = currentY - startY + contentGap;
-          doc.roundedRect(startX, startY, 550, boxHeight, 6).stroke("#AAB7B8");
+          const boxEndY = doc.y;
 
-          doc.y = startY + boxHeight + 10; // move below the box
+          doc
+            .roundedRect(
+              leftMargin - 10,
+              boxStartY - 5,
+              boxWidth + 20,
+              boxEndY - boxStartY + 10,
+              6
+            )
+            .stroke("#AAB7B8");
+
+          doc.moveDown(1);
         });
+
       } else {
         doc.text("No audit points available.");
         doc.moveDown(1);
