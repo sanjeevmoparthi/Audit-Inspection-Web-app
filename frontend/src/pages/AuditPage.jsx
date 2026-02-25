@@ -75,7 +75,7 @@ const downloadCompanyReport = async () => {
 
   return (
     <div className="container mt-3">
-      <h2>Audit Page</h2>
+      <h2>Audit </h2>
 
       <AuditForm
         regionId={regionId}
@@ -100,7 +100,7 @@ const downloadCompanyReport = async () => {
             <thead>
               <tr>
                 <th>#</th>
-                <th>Total Audit Points</th>
+                <th>Total Audit </th>
                 <th>Actions</th>
               </tr>
             </thead>

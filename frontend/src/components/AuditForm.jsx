@@ -1,6 +1,7 @@
 // src/components/AuditForm.jsx
 import React, { useState, useEffect } from "react";
 import api from "../api";
+import "../styles/auditform.css";
 
 const emptyOption = {
   optionName: "",
@@ -77,9 +78,9 @@ const handleSubmit = async (e) => {
 
   return (
     <div className="audit-form-container">
-      <h2>Audit Form</h2>
+      <h2 className = "audit-title"> Audit Form</h2>
       <button type="button" onClick={addOption} className="btn btn-primary mb-3">
-        ➕ Add Audit Point
+        ➕ Add Audit 
       </button>
 
       <form onSubmit={handleSubmit}>
@@ -88,9 +89,9 @@ const handleSubmit = async (e) => {
             <h5>Audit Point {idx + 1}</h5>
             <label className="form-label">Audit Checkpoints :</label>
             <textarea
-              name="optionName"
-              placeholder="Option Name"
-              value={opt.optionName}
+              name="AuditCheckPoints"
+              placeholder="Audit Check Points"
+              value={opt.AuditCheckPoints}
               onChange={(e) => handleChange(idx, e)}
               required
               className="form-control mb-1"
@@ -153,7 +154,7 @@ const handleSubmit = async (e) => {
               onChange={(e) => handleChange(idx, e)}
               className="form-control mb-1"
             />
-            <label className="form-label">Queries $ Observation :</label>
+            <label className="form-label">Queries & Observation :</label>
             <textarea
               name="queriesObservation"
               placeholder="Queries / Observation"
@@ -163,7 +164,7 @@ const handleSubmit = async (e) => {
             />
 
             <button type="button" className="btn btn-danger" onClick={() => deleteOption(idx)}>
-              ❌ Delete This Point
+              ❌ Delete Audit 
             </button>
           </div>
         ))}

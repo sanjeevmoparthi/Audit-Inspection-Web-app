@@ -11,13 +11,15 @@ function FloatingPanel() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % screens.length);
-    }, 4000); // change every 4 seconds
+useEffect(() => {
+  if (!screens || screens.length === 0) return;
 
-    return () => clearInterval(interval);
-  }, []);
+  const interval = setInterval(() => {
+    setCurrentIndex((prev) => (prev + 1) % screens.length);
+  }, 4000);
+
+  return () => clearInterval(interval);
+}, [screens]);
 
   return (
     <div className="top-navbar">

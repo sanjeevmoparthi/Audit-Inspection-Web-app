@@ -127,12 +127,6 @@ export default function Home() {
 >
   Add Company <i class="fa-solid fa-user-plus"></i>
 </button>
-      {/* FORM */}
-      {/* <CompanyForm
-        selectedCompany={selectedCompany}
-        clearSelection={() => setSelectedCompany(null)}
-        onCompanyAdded={fetchCompanies}
-      /> */}
 
         {showForm && (
   <CompanyForm

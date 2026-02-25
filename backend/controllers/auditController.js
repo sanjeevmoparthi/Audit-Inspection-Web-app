@@ -164,7 +164,7 @@ exports.downloadRegionReport = async (req, res) => {
           currentY += textHeight + fieldGap;
         };
 
-        drawField("Option Name", opt.optionName);
+        drawField("Audit Check Points", opt.AuditCheckPoints);
         drawField("Amount", opt.amount);
         drawField("Total Amount", opt.totalAmount);
         drawField("Initial Data Requirement", opt.initialDataRequirement);
@@ -274,7 +274,7 @@ exports.downloadCompanyReport = async (req, res) => {
           };
 
           // Draw fields to calculate total height
-          drawField("Option Name", opt.optionName);
+          drawField("Audit Check Ponits", opt.AuditCheckPoints);
           drawField("Amount", opt.amount);
           drawField("Total Amount", opt.totalAmount);
           drawField("Initial Data Requirement", opt.initialDataRequirement);

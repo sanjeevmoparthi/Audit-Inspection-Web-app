@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const optionSchema = new mongoose.Schema({
-  optionName: {
+  AuditCheckPoints: {
     type: String,
     required: true
   },

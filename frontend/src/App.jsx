@@ -4,7 +4,7 @@ import CompanyPage from "./pages/CompanyPage";
 import RegionPage from "./pages/RegionPage";
 import "./App.css";
 import AuditPage from "./pages/AuditPage";
-import FloatingPanel from "./components/FloatingPanel";
+import FloatingPanel from "./pages/FloatingPanel";
 
 function App() {
   return (
