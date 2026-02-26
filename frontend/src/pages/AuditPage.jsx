@@ -86,7 +86,7 @@ const downloadCompanyReport = async () => {
         refreshAudits={fetchAudits}
       />
 
-      <div className="mb-3">
+      <div className="mb-3 d-flex justify-content-center gap-3">
         <button className="btn btn-success me-2" onClick={downloadRegionReport}>
           📄 Download Region Report
         </button>
