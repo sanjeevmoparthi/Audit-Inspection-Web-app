@@ -21,6 +21,16 @@ const optionSchema = new mongoose.Schema({
   queriesObservation: String
 });
 
+const documentSchema = new mongoose.Schema({
+  fileName: String,
+  fileUrl: String,
+  fileType: String,
+  uploadedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
 const auditSchema = new mongoose.Schema(
   {
     companyId: {
@@ -39,7 +49,8 @@ const auditSchema = new mongoose.Schema(
       required: true,
       unique: true                   // ✅ One audit per region
     },
-    options: [optionSchema]
+    options: [optionSchema],
+    documents: [documentSchema]
   },
   {
     timestamps: true

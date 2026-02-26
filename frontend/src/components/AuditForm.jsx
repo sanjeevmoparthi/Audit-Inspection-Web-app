@@ -16,10 +16,12 @@ const emptyOption = {
   queriesObservation: ""
 };
 
+
 const AuditForm = ({ regionId, branchId: initialBranchId, companyId: initialCompanyId, refreshAudits }) => {
   const [options, setOptions] = useState([{ ...emptyOption }]);
   const [auditId, setAuditId] = useState(null);
   const navigate = useNavigate();
+  const [documents, setDocuments] = useState([]);
 
 
   // ✅ Store branchId and companyId in state so they can be used in handleSubmit
@@ -57,22 +59,62 @@ useEffect(() => {
     setOptions(updated);
   };
 
+// const handleSubmit = async (e) => {
+//   e.preventDefault();
+//   if (!branchId || !companyId) return alert("Branch or Company ID missing!");
+
+//   const payload = { regionId, branchId, companyId, options };
+
+//   try {
+//     if (auditId) {
+//       await api.put(`/audits/${auditId}`, payload);
+//       alert("Audit Updated Successfully");
+//     } else {
+//       const res = await api.post("/audits", payload);
+//       setAuditId(res.data._id);
+//       alert("Audit Saved Successfully");
+//     }
+//     if (refreshAudits) refreshAudits();
+//   } catch (err) {
+//     console.error(err.response?.data || err);
+//     alert("Error saving audit");
+//   }
+// };
 const handleSubmit = async (e) => {
   e.preventDefault();
-  if (!branchId || !companyId) return alert("Branch or Company ID missing!");
 
-  const payload = { regionId, branchId, companyId, options };
+  if (!branchId || !companyId) {
+    return alert("Branch or Company ID missing!");
+  }
 
   try {
+    const formData = new FormData();
+
+    formData.append("regionId", regionId);
+    formData.append("branchId", branchId);
+    formData.append("companyId", companyId);
+    formData.append("options", JSON.stringify(options));
+
+    // Append files
+    for (let i = 0; i < documents.length; i++) {
+      formData.append("documents", documents[i]);
+    }
+
     if (auditId) {
-      await api.put(`/audits/${auditId}`, payload);
+      await api.put(`/audits/${auditId}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       alert("Audit Updated Successfully");
     } else {
-      const res = await api.post("/audits", payload);
+      const res = await api.post("/audits", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       setAuditId(res.data._id);
       alert("Audit Saved Successfully");
     }
+
     if (refreshAudits) refreshAudits();
+
   } catch (err) {
     console.error(err.response?.data || err);
     alert("Error saving audit");
@@ -170,12 +212,21 @@ const handleSubmit = async (e) => {
               onChange={(e) => handleChange(idx, e)}
               className="form-control mb-1"
             />
-
+            <div className="mb-3">
+              <label className="form-label">Upload Documents:</label>
+              <input
+                type="file"
+                multiple
+                className="form-control"
+                onChange={(e) => setDocuments(e.target.files)}
+              />
+            </div>
             <button type="button" className="btn btn-danger" onClick={() => deleteOption(idx)}>
               ❌ Delete Audit 
             </button>
           </div>
         ))}
+
 
         <button type="submit" className="btn btn-success mt-2">
           💾 Save Audit Form

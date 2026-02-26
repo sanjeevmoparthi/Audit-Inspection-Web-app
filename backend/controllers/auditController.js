@@ -1,36 +1,95 @@
 const Audit = require("../models/Audit");
 const Region = require("../models/Region");
 const PDFDocument = require("pdfkit");
+const { PutObjectCommand } = require("@aws-sdk/client-s3");
+const { v4: uuidv4 } = require("uuid");
+const s3 = require("../config/s3");
 
 /* ================================
    CREATE AUDIT (One per Region)
 ================================ */
-
 exports.createAudit = async (req, res) => {
   try {
     const { companyId, branchId, regionId, options } = req.body;
 
-    // Check if audit already exists for region
     const existing = await Audit.findOne({ regionId });
     if (existing) {
       return res.status(400).json({ message: "Audit already exists for this region" });
+    }
+
+    let documents = [];
+
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+
+        const fileName = `${uuidv4()}-${file.originalname}`;
+
+        const key = `companies/${companyId}/branches/${branchId}/regions/${regionId}/${fileName}`;
+
+        const params = {
+          Bucket: process.env.AWS_BUCKET_NAME,
+          Key: key,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+          ACL: "public-read",
+        };
+
+        await s3.send(new PutObjectCommand(params));
+
+        const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+
+        documents.push({
+          fileName: file.originalname,
+          fileUrl,
+          fileType: file.mimetype
+        });
+      }
     }
 
     const audit = new Audit({
       companyId,
       branchId,
       regionId,
-      options
+      options: JSON.parse(options),
+      documents
     });
 
     await audit.save();
 
     res.status(201).json(audit);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error creating audit" });
   }
 };
+// exports.createAudit = async (req, res) => {
+//   try {
+//     const { companyId, branchId, regionId, options } = req.body;
+
+//     // Check if audit already exists for region
+//     const existing = await Audit.findOne({ regionId });
+//     if (existing) {
+//       return res.status(400).json({ message: "Audit already exists for this region" });
+//     }
+
+//     const audit = new Audit({
+//       companyId,
+//       branchId,
+//       regionId,
+//       options
+//     });
+
+//     await audit.save();
+
+//     res.status(201).json(audit);
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Error creating audit" });
+//   }
+// };
+
+
 
 
 /* ================================
@@ -57,24 +116,60 @@ exports.getAuditByRegion = async (req, res) => {
 /* ================================
    UPDATE AUDIT
 ================================ */
-
 exports.updateAudit = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { options } = req.body;
+    const { regionId, branchId, companyId } = req.body;
 
-    const audit = await Audit.findByIdAndUpdate(
-      id,
-      { options },
-      { new: true }
-    );
+    // Safely parse options
+    const options =
+      typeof req.body.options === "string"
+        ? JSON.parse(req.body.options)
+        : req.body.options;
 
+    const audit = await Audit.findById(req.params.id);
     if (!audit) {
       return res.status(404).json({ message: "Audit not found" });
     }
 
+    let newDocuments = [];
+
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const fileName = `${uuidv4()}-${file.originalname}`;
+        const key = `companies/${companyId}/branches/${branchId}/regions/${regionId}/${fileName}`;
+
+        await s3.send(
+          new PutObjectCommand({
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: key,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+             ACL: "public-read",
+          })
+        );
+
+        const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+
+        newDocuments.push({
+          fileName: file.originalname,
+          fileUrl,
+          fileType: file.mimetype,
+        });
+      }
+    }
+
+    // Append new documents (do not delete old ones)
+    audit.regionId = regionId;
+    audit.branchId = branchId;
+    audit.companyId = companyId;
+    audit.options = options;
+    audit.documents = [...audit.documents, ...newDocuments];
+
+    await audit.save();
+
     res.json(audit);
   } catch (err) {
+    console.error("UPDATE ERROR:", err);
     res.status(500).json({ message: "Error updating audit" });
   }
 };
@@ -190,6 +285,26 @@ exports.downloadRegionReport = async (req, res) => {
 
         doc.moveDown(1);
       });
+
+      // =========================
+    // DOCUMENT SECTION
+    // =========================
+
+    if (audit.documents && audit.documents.length > 0) {
+      doc.moveDown(2);
+      doc.fontSize(16).fillColor("black").text("Uploaded Documents");
+      doc.moveDown(1);
+
+      audit.documents.forEach((file, index) => {
+        doc
+          .fillColor("blue")
+          .text(`${index + 1}. ${file.fileName}`, {
+            link: file.fileUrl,
+            underline: true
+          });
+        doc.moveDown(0.5);
+      });
+    }
 
     } else {
       doc.text("No audit points available.");
@@ -329,6 +444,26 @@ exports.downloadCompanyReport = async (req, res) => {
 
           doc.moveDown(1);
         });
+
+        // =========================
+        // DOCUMENT SECTION
+        // =========================
+
+        if (audit.documents && audit.documents.length > 0) {
+          doc.moveDown(2);
+          doc.fontSize(16).fillColor("black").text("Uploaded Documents");
+          doc.moveDown(1);
+
+          audit.documents.forEach((file, index) => {
+            doc
+              .fillColor("blue")
+              .text(`${index + 1}. ${file.fileName}`, {
+                link: file.fileUrl,
+                underline: true
+              });
+            doc.moveDown(0.5);
+          });
+        }
 
       } else {
         doc.text("No audit points available.");

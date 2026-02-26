@@ -96,6 +96,61 @@ const downloadCompanyReport = async () => {
       </div>
 
       {audits.length > 0 && (
+  <>
+    <h4 className="mt-4">Saved Audit Data</h4>
+    <table className="table table-bordered">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Total Audit Points</th>
+          <th>Documents</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {audits.map((audit, idx) => (
+                <tr key={audit._id}>
+                  <td>{idx + 1}</td>
+                  <td>{audit.options.length}</td>
+
+                  {/* ✅ DOCUMENT COLUMN */}
+                  <td>
+                    {audit.documents && audit.documents.length > 0 ? (
+                      audit.documents.map((doc, i) => (
+                        <div key={i}>
+                          <a
+                            href={doc.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            📎 {doc.fileName}
+                          </a>
+                        </div>
+                      ))
+                    ) : (
+                      <span>No Documents</span>
+                    )}
+                  </td>
+
+                  <td>
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => handleDelete(audit._id)}
+                    >
+                      🗑 Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+</div>
+  );
+}
+
+      {/* {audits.length > 0 && (
         <>
           <h4 className="mt-4">Saved Audit Data</h4>
           <table className="table table-bordered">
@@ -124,4 +179,4 @@ const downloadCompanyReport = async () => {
       )}
     </div>
   );
-}
+} */}

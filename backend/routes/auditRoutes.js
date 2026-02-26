@@ -1,16 +1,26 @@
 const express = require("express");
 const router = express.Router();
 const auditController = require("../controllers/auditController");
+const upload = require("../middleware/uploadMiddleware");
 
-/* Create Audit */
-router.post("/", auditController.createAudit);
+/* Create Audit (with documents upload) */
+router.post(
+  "/",
+  upload.array("documents"),  // ✅ important
+  auditController.createAudit
+);
 
 /* Get Audit by Region */
 router.get("/region/:regionId", auditController.getAuditByRegion);
 
 
-/* Update Audit */
-router.put("/:id", auditController.updateAudit);
+
+
+router.put(
+  "/:id",
+  upload.array("documents"),   // 🔥 VERY IMPORTANT
+  auditController.updateAudit
+);
 
 /* Delete Audit */
 router.delete("/:id", auditController.deleteAudit);
