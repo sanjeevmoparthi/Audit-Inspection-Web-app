@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 require("dotenv").config();
 const cors = require("cors");
 const connectDB = require('./config/db.js');
-
+const path = require("path");
 
 
 const bodyParser = require('body-parser');
@@ -28,5 +28,12 @@ app.use("/api/audits", auditRoutes);
 app.use("/api/regions", regionRoutes);
 app.use("/api/companies", companyRoutes);
 
+// Serve frontend build folder
+app.use(express.static(path.join(__dirname, "../frontend/build")));
 
-app.listen(PORT, () => console.log("Server running on port 5000"));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/build/index.html"));
+});
+
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
